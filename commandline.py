@@ -69,7 +69,7 @@ def utility_workflow(parser: argparse.Namespace):
 	from utilities import country_codes
 	parser = FormatParser.from_parser(parser)
 	print(parser)
-	country_codes.convert_table(parser.input, parser.output, parser.column, parser.namespace, parser.fuzzy)
+	country_codes.convert_table_codes(parser.input, parser.output, parser.column, parser.namespace, parser.fuzzy)
 
 
 if __name__ == "__main__":

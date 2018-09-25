@@ -46,7 +46,7 @@ def get_codes(key: str, namespace: str = None) -> Optional[Dict[str, str]]:
 				return country
 
 
-def convert_table(input_filename: Path, output_filename: Path = None, column: str = 'countryCode',
+def convert_table_codes(input_filename: Path, output_filename: Path = None, column: str = 'countryCode',
 		namespace: Optional[str] = None, fuzzy:int = 0) -> Path:
 	"""
 	Adds a 'regionCode' column to the given table containing iso-3 country codes.
@@ -80,8 +80,6 @@ def convert_table(input_filename: Path, output_filename: Path = None, column: st
 
 	new_values = [(v['iso3'] if v else v) for v in new_values]
 
-	for i, j in zip(old_values, new_values):
-		print(i, "\t", j)
 	table['regionCode'] =  new_values
 
 	if output_filename is None:
