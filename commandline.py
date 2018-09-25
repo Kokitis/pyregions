@@ -7,15 +7,17 @@ from pathlib import Path
 @dataclass
 class FormatParser(argparse.Namespace):
 	# For convienience
-	input: str
-	output: str
+	input: Path
+	output: Path
 	column: str
 	namespace: Optional[str]
 	fuzzy: int
 
 	@classmethod
 	def from_parser(cls, parser) -> 'FormatParser':
-		return cls(Path(parser.input), Path(parser.output), parser.column, parser.namespace, int(parser.fuzzy))
+
+		output = Path(parser.output) if parser.output else None
+		return cls(Path(parser.input), output, parser.column, parser.namespace, int(parser.fuzzy))
 
 
 def define_parser() -> argparse.ArgumentParser:
@@ -66,9 +68,13 @@ def define_parser() -> argparse.ArgumentParser:
 def utility_workflow(parser: argparse.Namespace):
 	from utilities import country_codes
 	parser = FormatParser.from_parser(parser)
+	print(parser)
 	country_codes.convert_table(parser.input, parser.output, parser.column, parser.namespace, parser.fuzzy)
 
 
 if __name__ == "__main__":
+	print("Main")
 	commands = define_parser()
 	args = commands.parse_args()
+	print(args)
+	utility_workflow(args)
