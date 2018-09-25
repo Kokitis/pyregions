@@ -3,7 +3,7 @@ import csv
 from dataclasses import dataclass, asdict
 from typing import Dict, Optional
 from fuzzywuzzy import process
-from utilities import load_table, save_table
+from pyregions.utilities import load_table, save_table
 
 COUNTRY_CODE_FILENAME = Path(__file__).parent / "data" / "country-codes.csv"
 

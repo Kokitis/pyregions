@@ -40,5 +40,6 @@ def convert_standard_table(filename):
 	# COnverts tables which have dates as column names.
 	pass
 
-def convert_imf_table(filename:Path):
+def convert_weo_table(filename:Path):
+	#Wrapper around standerd_table for the WEO database.
 	pass
