@@ -1,1 +1,1 @@
-from .table_utilities import load_table, save_table
+from .table_utilities.table_io import load_table, save_table

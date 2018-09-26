@@ -1,11 +1,18 @@
 import progressbar
-
+"""
 from pyregions.widgets import tables
 from pyregions.github import tabletools, pprint, timetools, numbertools
 from math import isnan
 from pyregions.widgets.validation import ValidateApiResponse
 from typing import List, Dict, union
+"""
 
+from typing import List, Dict, Union, Tuple, Mapping
+from pyregions.utilities import load_table, save_table
+from pyregions.utilities.table_utilities import get_required_columns
+from pathlib import Path
+
+PathType = Union[str, Path]
 Row = Mapping
 SeriesValues = List[Tuple[Union[str, timetools.Timestamp], float]]
 
@@ -30,30 +37,29 @@ class TableApi:
 
 		Keyword Arguments
 		-----------------
-		* 'tableConfig': dict
+		- `tableConfig`: dict
 			Arguments to pass to pandas.DataFrame()
-		* 'startDay': str; default '01-01'
-		* 'jsonCompatible': bool; default False
-		* 'blacklist': list<str>
+		- `startDay`: str; default '01-01'
+
+		- `blacklist`: list<str>
 			A list of series names or codes to skip when processing the table.
-		* 'whitelist': list<str>
+		- `whitelist`: list<str>
 			If provided, only the listed series will be imported. Overrides 'blacklist'.
 
-		* 'seriesTagColumn', 'seriesTagMap': str, dict
+		- `seriesCodeColumn`: str
+		- `seriesNameColumn`: str
+		- `regionCodeColumn`: str, dict<str,str>
+		- `regionNameColumn`: str
+
+		- `seriesTagColumn`: str
 			Either the column containing tags for the series for the series, or a dictionary
 			mapping series codes to relevant tags.
-		* 'seriesTagDelimiter': str; default '|' Todo
-			The delimiter used to unpack the tags if tags are provided as a str.
-		* 'seriesNoteColumn', 'seriesNoteMap': str, dict
+		- `seriesNoteColumn` str
 			Dictionary keys should be strings of the form 'region_code|subject_code'. region_code defaults to None.
-		* 'seriesDescriptionColumn', 'seriesDescriptionMap': str, dict
+		- `seriesDescriptionColumn`: str
 
-		* 'seriesCodeColumn': str
-		* 'seriesNameColumn': str
-		* 'regionCodeColumn': str, dict<str,str>
-		* 'regionNameColumn': str
 
-		* 'yearRange': tuple(int, int)
+		- `yearRange`: tuple(int, int)
 			Filters out any values that occur in years outside the supplied range.
 			Ex. (1900, None) -> Filters out years below 1900, but has no upper bound.
 			Ex. (1900, 2000) -> Only years with ine range [1900, 2000] will be included.
@@ -62,22 +68,21 @@ class TableApi:
 		dict<>
 	"""
 
-	def __init__(self, filename: Any, **kwargs):
+	def __init__(self, filename: PathType, **kwargs):
 		kwargs['startDay'] = kwargs.get('startDay', '01-01')
-		kwargs['regionCodeColumn'] = kwargs.get('regionCodeColumn', 'regionCode')
-		kwargs['regionNameColumn'] = kwargs.get('regionNameColumn', 'regionName')
-		kwargs['seriesNameColumn'] = kwargs.get('seriesNameColumn', 'seriesName')
-		kwargs['seriesCodeColumn'] = kwargs.get('seriesCodeColumn', 'seriesCode')
-		kwargs['jsonCompatible'] = kwargs.get('jsonCompatible', False) or 'saveTo' in kwargs
+
 		file_kwargs = kwargs.get('tableConfig', dict())
 		namespace_key: str = kwargs.get('namespace')
 		report: Dict[str, str] = kwargs.get('report')
 		agency: Dict[str, str] = kwargs.get('agency')
+
 		assert isinstance(namespace_key, str)
 		assert isinstance(report, dict)
 		assert isinstance(agency, dict)
 
-		report_table: tabletools.Table = self._openTable(filename, **file_kwargs)
+		report_table = load_table(filename)
+
+		table_column_map = get_required_columns(report_table.columns, **kwargs)
 
 		region_list: List[str] = self._parseTable(report_table, **kwargs)
 
@@ -98,15 +103,7 @@ class TableApi:
 
 		ValidateApiResponse(self.data)
 
-	@staticmethod
-	def _openTable(filename, **kwargs):
-		if isinstance(filename, str):
-			table = pandas.read_excel(filename)
-			#table = tabletools.Table(filename, **kwargs)
-		else:
-			table = filename
 
-		return table
 
 	@staticmethod
 	def _getColumnNames(columns, **kwargs):
@@ -203,9 +200,6 @@ class TableApi:
 			----------
 			filename: str, tabletools.Table, pandas.DataFrame
 				The file path of the table to import. Should be compatible with tabletools.Table.
-
-
-
 
 		"""
 
