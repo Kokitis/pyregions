@@ -1,1 +1,1 @@
-from .table_utilities.table_io import load_table, save_table
+from pyregions.utilities.table_utilities import get_table, load_table, save_table

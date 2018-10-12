@@ -1,20 +1,6 @@
 from typing import List, Union, Tuple, Iterable, Any
 from itertools import filterfalse
-from dataclasses import dataclass
-
-
-@dataclass  # For clarity
-class RequiredColumns:
-	region_code_column: str
-	region_name_column: str
-	series_code_column: str
-	series_name_column: str
-	series_note_column: str
-	series_scale_column: str
-	series_unitname_column: str
-	series_unitcode_column: str
-	series_description_column: str
-	series_tag_column: str
+from pyregions.standard_table_definition import RequiredColumns
 
 
 def parse_keywords(columns: Iterable[Any], candidates: List[str]):
@@ -153,6 +139,92 @@ def get_required_columns(table_columns: Iterable[Any], **kwargs)->RequiredColumn
 	)
 	return result
 
+def column_heuristic(columns, **kwargs):
+	""" Classifies the key columns that *must* be present in order to import a spreadhseet.
+		Parameters
+		----------
+		columns: list<str>
+			The columns present in the table.
 
+		Keyword Arguments
+		-----------------
+
+		Notes
+		-----
+			This method identifies which columns contain information
+			related to the region and subject.
+	"""
+	detected_columns = get_required_columns(columns, **kwargs)
+	region_code_column = detected_columns['regionCodeColumn']
+	region_name_column = detected_columns['regionNameColumn']
+	series_code_column = detected_columns['seriesCodeColumn']
+	series_name_column = detected_columns['seriesNameColumn']
+
+	series_note_column = detected_columns['seriesNoteColumn']
+	series_tag_column = detected_columns['seriesTagColumn']
+	series_unit_column = detected_columns['seriesUnitNameColumn']
+	series_scale_column = detected_columns['seriesScaleColumn']
+	series_description_column = detected_columns['seriesDescriptionColumn']
+
+	# Check if any selection methods were included as kwargs
+	_region_code_column_keyword = kwargs.get('regionCodeColumn')
+	_region_name_column_keyword = kwargs.get('regionNameColumn')
+	_series_code_column_keyword = kwargs.get('seriesCodeColumn', kwargs.get('subjectCodeColumn'))
+	_series_name_column_keyword = kwargs.get('seriesNameColumn', kwargs.get('subjectNameColumn'))
+
+	# Check if any of the column keywords is overridden by kwargs.
+
+	if _region_code_column_keyword:
+		region_code_column = _region_code_column_keyword
+
+	if _region_name_column_keyword:
+		region_name_column = _region_name_column_keyword
+
+	if _series_code_column_keyword:
+		series_code_column = _series_code_column_keyword
+
+	if _series_name_column_keyword:
+		series_name_column = _series_name_column_keyword
+
+	series_note_map = kwargs.get('seriesNoteMap')
+	series_tag_map = kwargs.get('seriesTagMap')
+	series_description_map = kwargs.get('seriesDescriptionMap')
+	series_scale_map = kwargs.get('seriesScaleMap')
+	series_unit_map = kwargs.get('seriesUnitMap')
+
+	if series_note_map:
+		series_note_column = series_note_map
+
+	if series_tag_map:
+		series_tag_column = series_tag_map
+
+	if series_description_map:
+		series_description_column = series_description_map
+
+	if series_scale_map:
+		series_scale_column = series_scale_map
+	if series_unit_map:
+		series_unit_column = series_unit_map
+
+	column_config = {
+		'regionCodeColumn':        region_code_column,
+		'regionNameColumn':        region_name_column,
+		'seriesCodeColumn':        series_code_column,
+		'seriesNameColumn':        series_name_column,
+
+		'seriesNoteColumn':        series_note_column,
+		'seriesTagColumn':         series_tag_column,
+		'seriesDescriptionColumn': series_description_column,
+		'seriesScaleColumn':       series_scale_column,
+		'seriesUnitColumn':        series_unit_column,
+
+		'seriesNoteMap':           series_note_map,
+		'seriesTagMap':            series_tag_map,
+		'seriesDescriptionMap':    series_description_map,
+		'seriesScaleMap':          series_scale_map,
+		'seriesUnitMap':           series_unit_map
+	}
+
+	return column_config
 if __name__ == "__main__":
 	pass

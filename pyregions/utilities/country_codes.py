@@ -20,32 +20,6 @@ def _get_separator():
 	return None
 
 
-def get_codes(key: str, namespace: str = None) -> Optional[Dict[str, str]]:
-	"""
-	Retrieves a code based on the given key. Searches for the first matching key in any field if namespace is not
-	given.
-	Parameters
-	----------
-	key: str
-		The string to search for.
-	namespace: {'iso2', 'iso3', 'ison', 'm49'}; default None
-
-	Returns
-	-------
-	country_code: str
-	"""
-
-	if namespace: namespace = namespace.lower()
-
-	for country in COUNTRY_CODES.values():
-		if namespace:
-			if key == country[namespace]:
-				return country
-		else:
-			if key in country.values():
-				return country
-
-
 def convert_table_codes(input_filename: Path, output_filename: Path = None, column: str = 'countryCode',
 		namespace: Optional[str] = None, fuzzy:int = 0) -> Path:
 	"""
@@ -109,6 +83,32 @@ def fuzzy_search(key: str, score = 95) -> Dict[str, str]:
 
 	if best_match and ratio >= score:
 		return COUNTRY_CODES[best_match]
+
+
+def get_codes(key: str, namespace: str = None) -> Optional[Dict[str, str]]:
+	"""
+	Retrieves a code based on the given key. Searches for the first matching key in any field if namespace is not
+	given.
+	Parameters
+	----------
+	key: str
+		The string to search for.
+	namespace: {'iso2', 'iso3', 'ison', 'm49'}; default None
+
+	Returns
+	-------
+	country_code: str
+	"""
+
+	if namespace: namespace = namespace.lower()
+
+	for country in COUNTRY_CODES.values():
+		if namespace:
+			if key == country[namespace]:
+				return country
+		else:
+			if key in country.values():
+				return country
 
 
 def load_country_codes(filename: Path = COUNTRY_CODE_FILENAME) -> Dict[str, Dict[str, str]]:

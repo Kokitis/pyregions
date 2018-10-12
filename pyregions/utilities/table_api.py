@@ -11,12 +11,16 @@ from typing import List, Dict, Union, Tuple, Mapping
 from pyregions.utilities import load_table, save_table
 from pyregions.utilities.table_utilities import get_required_columns
 from pathlib import Path
-
+from dataclasses import dataclass, asdict
 PathType = Union[str, Path]
 Row = Mapping
 SeriesValues = List[Tuple[Union[str, timetools.Timestamp], float]]
 
 import pandas
+
+
+
+
 class TableApi:
 	""" Designed to parse a spreadsheet and import it into the database.
 		Parameters
@@ -65,7 +69,7 @@ class TableApi:
 			Ex. (1900, 2000) -> Only years with ine range [1900, 2000] will be included.
 		Returns
 		-------
-		dict<>
+		Dict
 	"""
 
 	def __init__(self, filename: PathType, **kwargs):
@@ -75,10 +79,6 @@ class TableApi:
 		namespace_key: str = kwargs.get('namespace')
 		report: Dict[str, str] = kwargs.get('report')
 		agency: Dict[str, str] = kwargs.get('agency')
-
-		assert isinstance(namespace_key, str)
-		assert isinstance(report, dict)
-		assert isinstance(agency, dict)
 
 		report_table = load_table(filename)
 
@@ -95,104 +95,8 @@ class TableApi:
 
 		self.data = report_information
 
-		save_filename = kwargs.get('saveTo')
-		if save_filename:
-			import json
-			with open(save_filename, 'w') as file1:
-				file1.write(json.dumps(self.data, indent = 4, sort_keys = True))
-
-		ValidateApiResponse(self.data)
 
 
-
-	@staticmethod
-	def _getColumnNames(columns, **kwargs):
-		""" Classifies the key columns that *must* be present in order to import a spreadhseet.
-			Parameters
-			----------
-			columns: list<str>
-				The columns present in the table.
-
-			Keyword Arguments
-			-----------------
-
-			Notes
-			-----
-				This method identifies which columns contain information
-				related to the region and subject.
-		"""
-		detected_columns = tables.getRequiredColumns(columns, **kwargs)
-		region_code_column = detected_columns['regionCodeColumn']
-		region_name_column = detected_columns['regionNameColumn']
-		series_code_column = detected_columns['seriesCodeColumn']
-		series_name_column = detected_columns['seriesNameColumn']
-
-		series_note_column = detected_columns['seriesNoteColumn']
-		series_tag_column = detected_columns['seriesTagColumn']
-		series_unit_column = detected_columns['seriesUnitNameColumn']
-		series_scale_column = detected_columns['seriesScaleColumn']
-		series_description_column = detected_columns['seriesDescriptionColumn']
-
-		# Check if any selection methods were included as kwargs
-		_region_code_column_keyword = kwargs.get('regionCodeColumn')
-		_region_name_column_keyword = kwargs.get('regionNameColumn')
-		_series_code_column_keyword = kwargs.get('seriesCodeColumn', kwargs.get('subjectCodeColumn'))
-		_series_name_column_keyword = kwargs.get('seriesNameColumn', kwargs.get('subjectNameColumn'))
-
-		# Check if any of the column keywords is overridden by kwargs.
-
-		if _region_code_column_keyword:
-			region_code_column = _region_code_column_keyword
-
-		if _region_name_column_keyword:
-			region_name_column = _region_name_column_keyword
-
-		if _series_code_column_keyword:
-			series_code_column = _series_code_column_keyword
-
-		if _series_name_column_keyword:
-			series_name_column = _series_name_column_keyword
-
-		series_note_map = kwargs.get('seriesNoteMap')
-		series_tag_map = kwargs.get('seriesTagMap')
-		series_description_map = kwargs.get('seriesDescriptionMap')
-		series_scale_map = kwargs.get('seriesScaleMap')
-		series_unit_map = kwargs.get('seriesUnitMap')
-
-		if series_note_map:
-			series_note_column = series_note_map
-
-		if series_tag_map:
-			series_tag_column = series_tag_map
-
-		if series_description_map:
-			series_description_column = series_description_map
-
-		if series_scale_map:
-			series_scale_column = series_scale_map
-		if series_unit_map:
-			series_unit_column = series_unit_map
-
-		column_config = {
-			'regionCodeColumn':        region_code_column,
-			'regionNameColumn':        region_name_column,
-			'seriesCodeColumn':        series_code_column,
-			'seriesNameColumn':        series_name_column,
-
-			'seriesNoteColumn':        series_note_column,
-			'seriesTagColumn':         series_tag_column,
-			'seriesDescriptionColumn': series_description_column,
-			'seriesScaleColumn':       series_scale_column,
-			'seriesUnitColumn':        series_unit_column,
-
-			'seriesNoteMap':           series_note_map,
-			'seriesTagMap':            series_tag_map,
-			'seriesDescriptionMap':    series_description_map,
-			'seriesScaleMap':          series_scale_map,
-			'seriesUnitMap':           series_unit_map
-		}
-
-		return column_config
 
 	def _parseTable(self, table, **kwargs):
 		""" Imports a spreadsheet into the database.
