@@ -65,3 +65,5 @@ target/
 
 # ipython notebook
 .ipynb
+
+.pytest_cache/
