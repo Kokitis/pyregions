@@ -1,54 +1,73 @@
 from pathlib import Path
-from pyregions import StandardTable, StandardSeries, RequiredColumns
+from typing import List, Mapping
+
+import pandas
+from infotools import numbertools
+
+from pyregions import standard_definition as sd
 from pyregions.utilities import get_table
-from pytools.numbertools import to_number
+from pyregions.utilities.table_utilities import get_numeric_columns
 
 
+def _convert_table_row_to_standard_series(row: Mapping[str, str], column_map: sd.RequiredColumns) -> sd.StandardSeries:
+	"""
+	Parses a row from a table and returns a standardized series.
+	Parameters
+	----------
+	row: pandas.Series
+	column_map:RequiredColumns
 
-def load_standard_table(path: Path, column_map: RequiredColumns = RequiredColumns()) -> StandardTable:
+	Returns
+	-------
+	StandardSeries
+
+	Examples
+	--------
+
+	"""
+	numeric_columns = get_numeric_columns(row.keys())
+	region_name = row[column_map.region_name_column]
+	region_code = row[column_map.region_code_column]
+
+	series_name = row[column_map.name_column]
+	series_code = row[column_map.code_column]
+	series_description = row[column_map.description_column]
+
+	series_units = row[column_map.units_column]
+	series_scale = numbertools.get_scale(row[column_map.scale_column]).prefix
+	series_notes = row.get(column_map.note_column, "")
+	series_tags = row.get(column_map.tag_column, [])
+
+	series_values = [(col, row[col]) for col in numeric_columns]
+	series_values = [(int(i), numbertools.to_number(j)) for i, j in series_values]
+
+	series = sd.StandardSeries(
+		region_name = region_name,
+		region_code = region_code,
+		series_name = series_name,
+		series_code = series_code,
+		description = series_description,
+		notes = series_notes,
+		units = series_units,
+		scale = series_scale,
+		tags = series_tags,
+		values = series_values
+	)
+	return series
+
+
+def read_standard_table(path: Path, column_map: sd.RequiredColumns = sd.RequiredColumns()) -> List[sd.StandardSeries]:
 	""" Imports a table formatted with annual data in each column."""
 	table, numeric_columns = get_table(path)
+
 	column_map.find_missing_columns(table.columns)
-	parsed_table = StandardTable()
 
-	for index, row in table.iterrows():
+	parsed_series = [_convert_table_row_to_standard_series(row, column_map) for _, row in table.iterrows()]
 
-		region_name = row[column_map.region_name_column]
-		region_code = row[column_map.region_code_column]
+	return parsed_series
 
-		series_name = row[column_map.series_name_column]
-		series_code = row[column_map.series_code_column]
-		series_description = row[column_map.series_description_column]
-		series_notes = row.get(column_map.series_note_column)
-		series_units = row[column_map.series_units_column]
-		series_scale = row[column_map.series_scale_column]
-		series_tags = row.get(column_map.series_tag_column, [])
-
-		series_values = [(col, row[col]) for col in numeric_columns]
-		series_values = [(int(i), to_number(j)) for i, j in series_values]
-
-		series = StandardSeries(
-			region_name = region_name,
-			region_code = region_code,
-			series_name = series_name,
-			series_code = series_code,
-			series_description = series_description,
-			series_notes = series_notes,
-			series_units = series_units,
-			series_scale = series_scale,
-			series_tags = series_tags,
-
-			series_values = series_values
-		)
-		parsed_table.data.append(series)
-
-	return parsed_table
+def read_standard_data(path:Path, report:Mapping[str,str])->sd.StandardData:
+	pass
 
 if __name__ == "__main__":
-
-	filename = Path.cwd() / "tests" / "standard_table.tsv"
-
-	t = load_standard_table(filename)
-	print(t.to_yaml())
-
-
+	pass

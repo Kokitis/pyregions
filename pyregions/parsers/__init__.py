@@ -1,1 +1,1 @@
-from .parse_table import load_standard_table
+from .parse_table import read_standard_table

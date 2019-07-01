@@ -59,6 +59,16 @@ target/
 
 # pycharm
 .idea/
+venv/
+
+# Temporarily ignore data files
+*.tsv
+*.csv
+*.xlsx
+*.yaml
+*.zip
+shapefiles/
+
 
 # visual studio code 
 .vscode/
