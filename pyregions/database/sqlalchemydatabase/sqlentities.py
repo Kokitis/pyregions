@@ -1,19 +1,39 @@
+from sqlalchemy import Column, DateTime, Float, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, DateTime, Float
 
 EntityBase = declarative_base()
+
+
+class Namespace(EntityBase):
+	__tablename__ = "namespaces"
+	name: str = Column(String)
+
+	def __repr__(self) -> str:
+		s = f"Namespace(name = '{self.name}')"
+		return s
+
+
+class RegionCode(EntityBase):
+	__tablename__ = 'regioncodes'
+	id = Column(Integer, primary_key = True)
+	value: str = Column(String)
+
+	def __repr__(self) -> str:
+		s = f"RegionCode(value = '{self.value}')"
+		return s
 
 
 class Region(EntityBase):
 	__tablename__ = 'regions'
 
 	id = Column(Integer, primary_key = True)
-	code = Column(String)
 	name = Column(String)
 	type = Column(String)
 
+	# TODO: Add alias
+
 	def __repr__(self) -> str:
-		string = f"Region(code = {self.code}, name = {self.name}, type = {self.type})"
+		string = f"Region(name = '{self.name}', type = '{self.type}')"
 		return string
 
 	def series(self):
@@ -31,7 +51,7 @@ class Report(EntityBase):
 	day_of_year = Column(Integer)
 
 	def __repr__(self) -> str:
-		s = f"Report(date = {self.date}, name = {self.name}, agency = {self.agency})"
+		s = f"Report(date = '{self.date}', name = '{self.name}', agency = '{self.agency}')"
 		return s
 
 	def series(self):
@@ -47,8 +67,8 @@ class Series(EntityBase):
 	notes = Column(String)
 	units = Column(String)
 
-	def __repr__(self)->str:
-		s = f"Series(code = {self.code}, name = {self.name}, units = {self.units})"
+	def __repr__(self) -> str:
+		s = f"Series(code = '{self.code}', name = '{self.name}', units = '{self.units}')"
 		return s
 
 	def region(self):
