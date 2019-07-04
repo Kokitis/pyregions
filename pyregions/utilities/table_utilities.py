@@ -1,23 +1,30 @@
 import pandas
 
 from pathlib import Path
-from typing import Union, List, Iterable, Tuple
-ColumnsType = List[Union[str,int]]
+from typing import Union, List, Tuple, Optional
+from infotools.numbertools import to_number
+ColumnsType = List[Union[str,int,float]]
 
 def get_numeric_columns(columns: ColumnsType) -> ColumnsType:
+	""" Returns a list of columns which refer to points in time."""
 	numeric_columns = list()
 	for col in columns:
 		try:
-			int(col)
-			numeric_columns.append(col)
+			num = to_number(col, None)
+			if num is not None: # may be 0
+				numeric_columns.append(col)
 		except ValueError:
 			continue
 	return numeric_columns
 
 
-def _get_delimiter(path: Path) -> str:
+def _get_delimiter(path: Union[str,Path]) -> Optional[str]:
+	""" Infers the correct delimiter to use when parsing the given csv/tsv file.
+		Returns `None` if the path does not refer to a delimited file.
+	"""
+	path = Path(path)
 	if path.suffix in {'.xlsx', '.xls'}:
-		separator = '.xlsx'
+		separator = None
 	elif path.suffix in {'.tsv', '.tab'}:
 		separator = '\t'
 	else:
@@ -29,10 +36,11 @@ def _get_delimiter(path: Path) -> str:
 def load_table(path: Union[str, Path]) -> pandas.DataFrame:
 	path = Path(path)
 	sep = _get_delimiter(path)
-	if sep == '.xlsx':
-		_table = pandas.read_excel(str(path))
+	if sep:
+		_table = pandas.read_table(path, sep = sep)
 	else:
-		_table = pandas.read_table(str(path), sep = sep)
+		_table = pandas.read_excel(path)
+
 	return _table
 
 def get_table(path:Union[str,Path])->Tuple[pandas.DataFrame, ColumnsType]:

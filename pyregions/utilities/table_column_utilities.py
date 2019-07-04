@@ -1,6 +1,6 @@
 from typing import List, Union, Tuple, Iterable, Any
 from itertools import filterfalse
-from pyregions.standard_table_definition import RequiredColumns
+from pyregions.standard_definition import RequiredColumns
 
 
 def parse_keywords(columns: Iterable[Any], candidates: List[str]):
