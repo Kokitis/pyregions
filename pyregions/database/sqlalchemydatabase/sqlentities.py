@@ -1,5 +1,7 @@
+
 from sqlalchemy import Column, Date, Float, Integer, String, Text, ForeignKey, Table
 from sqlalchemy.orm import relationship
+
 from sqlalchemy.ext.declarative import declarative_base
 
 # String constrains the length of our str objects. Since Text is unbounded, it is probably preferable.
@@ -35,13 +37,36 @@ class RegionCode(EntityBase):
 		return s
 
 
+class Namespace(EntityBase):
+	__tablename__ = "namespaces"
+	name: str = Column(String)
+
+	def __repr__(self) -> str:
+		s = f"Namespace(name = '{self.name}')"
+		return s
+
+
+class RegionCode(EntityBase):
+	__tablename__ = 'regioncodes'
+	id = Column(Integer, primary_key = True)
+	value: str = Column(String)
+
+	def __repr__(self) -> str:
+		s = f"RegionCode(value = '{self.value}')"
+		return s
+
+
 class Region(EntityBase):
 	__tablename__ = 'regions'
 
 	id = Column(Integer, primary_key = True)
+
 	name = Column(Text)
 	type = Column(Text)
 	codes = relationship('RegionCode', secondary = _region_region_code_link_table, back_populates = '')
+
+	# TODO: Add alias
+
 
 	# TODO: Add alias
 
@@ -75,11 +100,13 @@ class Report(EntityBase):
 class Series(EntityBase):
 	__tablename__ = "series"
 	id = Column(Integer, primary_key = True)
+
 	code = Column(Text)
 	description = Column(Text)
 	name = Column(Text)
 	notes = Column(Text)
 	units = Column(Text)
+
 
 	def __repr__(self) -> str:
 		s = f"Series(code = '{self.code}', name = '{self.name}', units = '{self.units}')"
