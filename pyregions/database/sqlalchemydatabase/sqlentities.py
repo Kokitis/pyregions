@@ -9,7 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 # TODO: Evaluate whther it's worth converting some fields to String rather than Text.
 EntityBase = declarative_base()
 
-_region_region_code_link_table = Table(
+_intermediate_table_region_regioncode = Table(
 	'regionregioncode', EntityBase.metadata,
 	Column('region_id', ForeignKey('regions.id')),
 	Column('region_code', ForeignKey('regioncodes.id'))
@@ -31,26 +31,7 @@ class RegionCode(EntityBase):
 	value: str = Column(Text)
 	_namespace_id = Column(Integer, ForeignKey(Namespace.id))
 	namespace = relationship("Namespace", back_populates = "codes")
-	regions = relationship('Region', secondary = _region_region_code_link_table, back_populates = 'codes')
-	def __repr__(self) -> str:
-		s = f"RegionCode(value = '{self.value}')"
-		return s
-
-
-class Namespace(EntityBase):
-	__tablename__ = "namespaces"
-	name: str = Column(String)
-
-	def __repr__(self) -> str:
-		s = f"Namespace(name = '{self.name}')"
-		return s
-
-
-class RegionCode(EntityBase):
-	__tablename__ = 'regioncodes'
-	id = Column(Integer, primary_key = True)
-	value: str = Column(String)
-
+	regions = relationship('Region', secondary = _intermediate_table_region_regioncode, back_populates = 'codes')
 	def __repr__(self) -> str:
 		s = f"RegionCode(value = '{self.value}')"
 		return s
@@ -63,7 +44,7 @@ class Region(EntityBase):
 
 	name = Column(Text)
 	type = Column(Text)
-	codes = relationship('RegionCode', secondary = _region_region_code_link_table, back_populates = '')
+	codes = relationship('RegionCode', secondary = _intermediate_table_region_regioncode, back_populates = '')
 
 	# TODO: Add alias
 
