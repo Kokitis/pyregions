@@ -31,7 +31,7 @@ class RegionCode(EntityBase):
 	value: str = Column(Text)
 	_namespace_id = Column(Integer, ForeignKey(Namespace.id))
 	namespace = relationship("Namespace", back_populates = "codes")
-	regions = relationship('Region', secondary = _intermediate_table_region_regioncode, back_populates = 'codes')
+	region = relationship('Region', secondary = _intermediate_table_region_regioncode, back_populates = 'codes')
 	def __repr__(self) -> str:
 		s = f"RegionCode(value = '{self.value}')"
 		return s
@@ -44,7 +44,7 @@ class Region(EntityBase):
 
 	name = Column(Text)
 	type = Column(Text)
-	codes = relationship('RegionCode', secondary = _intermediate_table_region_regioncode, back_populates = '')
+	codes = relationship('RegionCode', secondary = _intermediate_table_region_regioncode, back_populates = 'region')
 
 	# TODO: Add alias
 
