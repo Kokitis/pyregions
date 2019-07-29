@@ -29,9 +29,13 @@ class RegionCode(EntityBase):
 	__tablename__ = 'regioncodes'
 	id = Column(Integer, primary_key = True)
 	value: str = Column(Text)
-	_namespace_id = Column(Integer, ForeignKey(Namespace.id))
+	# Establish a relationsship from RegionCode to Namespace
+	namespace_id = Column(Integer, ForeignKey("namespace.id"))
 	namespace = relationship("Namespace", back_populates = "codes")
-	region = relationship('Region', secondary = _intermediate_table_region_regioncode, back_populates = 'codes')
+
+	# Establish a relationship with a Region
+	region_id = Column(Integer, ForeignKey("region.id"))
+	region = relationship('Region', back_populates = 'codes')
 	def __repr__(self) -> str:
 		s = f"RegionCode(value = '{self.value}')"
 		return s
@@ -44,12 +48,14 @@ class Region(EntityBase):
 
 	name = Column(Text)
 	type = Column(Text)
-	codes = relationship('RegionCode', secondary = _intermediate_table_region_regioncode, back_populates = 'region')
 
-	# TODO: Add alias
+	# Establish relationship with RegionCode
+	codes = relationship("RegionCode", back_populates = "region")
+
+	# TODO: Add aliases
 
 
-	# TODO: Add alias
+	# TODO: Add aliases
 
 	def __repr__(self) -> str:
 		string = f"Region(name = '{self.name}', type = '{self.type}')"
@@ -67,15 +73,15 @@ class Report(EntityBase):
 	agency = Column(Text)
 	# Used to indicate the day of year that the dataset corresponds to.
 	# Ex. census data starts mid-year.
-
 	day_of_year = Column(Integer)
+
+	# Establish relationship with Series
+	series = relationship("Series", back_populates = "report")
 
 	def __repr__(self) -> str:
 		s = f"Report(date = '{self.date}', name = '{self.name}', agency = '{self.agency}')"
 		return s
 
-	def series(self):
-		raise NotImplementedError
 
 
 class Series(EntityBase):
@@ -88,6 +94,12 @@ class Series(EntityBase):
 	notes = Column(Text)
 	units = Column(Text)
 
+	# Establish relationship with Report
+	report_id = Column(String, ForeignKey("report.id"))
+	report = relationship("Report", back_populates = "series")
+
+	region_id = Column(Integer, ForeignKey("region.id"))
+	region = relationship("Region", back_populates = "series")
 
 	def __repr__(self) -> str:
 		s = f"Series(code = '{self.code}', name = '{self.name}', units = '{self.units}')"
