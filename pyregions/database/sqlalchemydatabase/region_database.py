@@ -5,9 +5,9 @@ from sqlalchemy.orm import sessionmaker
 from typing import Optional
 
 try:
-	import sqlentities
-except:
 	from . import sqlentities
+except ModuleNotFoundError:
+	import sqlentities
 
 
 class BaseDatabase:
@@ -18,8 +18,8 @@ class BaseDatabase:
 			self.filename = filename
 
 		self.session = self.create_database(self.filename)
-
-	def create_database(self, filename: Optional[str]):
+	@staticmethod
+	def create_database(filename: Optional[str]):
 		""" Creates an sqlite database."""
 		engine = create_engine(f'sqlite:///{filename}')
 

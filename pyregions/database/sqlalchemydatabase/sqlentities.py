@@ -1,4 +1,3 @@
-
 from sqlalchemy import Column, Date, Float, Integer, String, Text, ForeignKey, Table
 from sqlalchemy.orm import relationship
 
@@ -9,26 +8,23 @@ from sqlalchemy.ext.declarative import declarative_base
 # TODO: Evaluate whther it's worth converting some fields to String rather than Text.
 EntityBase = declarative_base()
 
-_intermediate_table_region_regioncode = Table(
-	'regionregioncode', EntityBase.metadata,
-	Column('region_id', ForeignKey('regions.id')),
-	Column('region_code', ForeignKey('regioncodes.id'))
-)
 
 class Namespace(EntityBase):
-	__tablename__ = "namespaces"
+	__tablename__ = "namespace"
 	id = Column(Integer, primary_key = True)
 	name: str = Column(Text)
 	codes = relationship("RegionCode", back_populates = "namespace")
+
 	def __repr__(self) -> str:
 		s = f"Namespace(name = '{self.name}')"
 		return s
 
 
 class RegionCode(EntityBase):
-	__tablename__ = 'regioncodes'
+	__tablename__ = 'regioncode'
 	id = Column(Integer, primary_key = True)
 	value: str = Column(Text)
+
 	# Establish a relationsship from RegionCode to Namespace
 	namespace_id = Column(Integer, ForeignKey("namespace.id"))
 	namespace = relationship("Namespace", back_populates = "codes")
@@ -36,13 +32,14 @@ class RegionCode(EntityBase):
 	# Establish a relationship with a Region
 	region_id = Column(Integer, ForeignKey("region.id"))
 	region = relationship('Region', back_populates = 'codes')
+
 	def __repr__(self) -> str:
 		s = f"RegionCode(value = '{self.value}')"
 		return s
 
 
 class Region(EntityBase):
-	__tablename__ = 'regions'
+	__tablename__ = 'region'
 
 	id = Column(Integer, primary_key = True)
 
@@ -52,8 +49,8 @@ class Region(EntityBase):
 	# Establish relationship with RegionCode
 	codes = relationship("RegionCode", back_populates = "region")
 
-	# TODO: Add aliases
-
+	# Establish relationship with `series`
+	series = relationship("Series", back_populates = "region")
 
 	# TODO: Add aliases
 
@@ -61,13 +58,12 @@ class Region(EntityBase):
 		string = f"Region(name = '{self.name}', type = '{self.type}')"
 		return string
 
-	def series(self):
-		raise NotImplementedError
 
 
 class Report(EntityBase):
-	__tablename__ = "reports"
-	name = Column(Text, primary_key = True)
+	__tablename__ = "report"
+	id = Column(Integer, primary_key = True)
+	name = Column(Text)
 	date = Column(Date)
 	url = Column(Text)
 	agency = Column(Text)
@@ -81,7 +77,6 @@ class Report(EntityBase):
 	def __repr__(self) -> str:
 		s = f"Report(date = '{self.date}', name = '{self.name}', agency = '{self.agency}')"
 		return s
-
 
 
 class Series(EntityBase):
@@ -101,18 +96,12 @@ class Series(EntityBase):
 	region_id = Column(Integer, ForeignKey("region.id"))
 	region = relationship("Region", back_populates = "series")
 
+	scale_id = Column(Integer, ForeignKey("scale.code"))
+	scale = relationship("Scale", back_populates = "series")
+
 	def __repr__(self) -> str:
 		s = f"Series(code = '{self.code}', name = '{self.name}', units = '{self.units}')"
 		return s
-
-	def region(self):
-		raise NotImplementedError
-
-	def report(self):
-		raise NotImplementedError
-
-	def scale(self):
-		raise NotImplementedError
 
 	def tags(self):
 		raise NotImplementedError
@@ -129,12 +118,11 @@ class Scale(EntityBase):
 	code = Column(String(10), primary_key = True)
 	multiplier = Column(Float)
 
+	series = relationship("Series", back_populates = "scale")
+
 	def __repr__(self) -> str:
 		s = f"Scale(code = {self.code}, multiplier = {self.multiplier})"
 		return s
-
-	def series(self):
-		raise NotImplementedError
 
 
 if __name__ == "__main__":

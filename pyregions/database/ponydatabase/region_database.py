@@ -101,10 +101,6 @@ class BasicRegionDatabase:
 			message = f"The following scales should be added to the database: {missing_scales}"
 			raise ValueError(message)
 
-	# Add the report to the database
-
-	# Add the series to the database
-
 	@db_session
 	def import_regions(self, regiondata: Union[Path, Iterable[sd.StandardRegion]]):
 		""" Adds a series of regions to the database.
