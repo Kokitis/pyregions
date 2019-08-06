@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Date, Float, Integer, String, Text, ForeignKey, Table
+from sqlalchemy import Column, Date, Float, Integer, String, Text, ForeignKey, Table, Numeric, ARRAY
 from sqlalchemy.orm import relationship
-
+from typing import Iterable, Collection, List
 from sqlalchemy.ext.declarative import declarative_base
+import datetime
 
 # String constrains the length of our str objects. Since Text is unbounded, it is probably preferable.
 # However, String may make table operations faster.
@@ -11,9 +12,10 @@ EntityBase = declarative_base()
 
 class Namespace(EntityBase):
 	__tablename__ = "namespace"
-	id = Column(Integer, primary_key = True)
+	id: int = Column(Integer, primary_key = True)
 	name: str = Column(Text)
-	codes = relationship("RegionCode", back_populates = "namespace")
+	url: str = Column(Text)
+	codes: Iterable["RegionCode"] = relationship("RegionCode", back_populates = "namespace")
 
 	def __repr__(self) -> str:
 		s = f"Namespace(name = '{self.name}')"
@@ -22,16 +24,16 @@ class Namespace(EntityBase):
 
 class RegionCode(EntityBase):
 	__tablename__ = 'regioncode'
-	id = Column(Integer, primary_key = True)
+	id: int = Column(Integer, primary_key = True)
 	value: str = Column(Text)
 
 	# Establish a relationsship from RegionCode to Namespace
-	namespace_id = Column(Integer, ForeignKey("namespace.id"))
-	namespace = relationship("Namespace", back_populates = "codes")
+	namespace_id: int = Column(Integer, ForeignKey("namespace.id"))
+	namespace: "Namespace" = relationship("Namespace", back_populates = "codes")
 
 	# Establish a relationship with a Region
-	region_id = Column(Integer, ForeignKey("region.id"))
-	region = relationship('Region', back_populates = 'codes')
+	region_id: int = Column(Integer, ForeignKey("region.id"))
+	region: "Region" = relationship('Region', back_populates = 'codes')
 
 	def __repr__(self) -> str:
 		s = f"RegionCode(value = '{self.value}')"
@@ -41,16 +43,16 @@ class RegionCode(EntityBase):
 class Region(EntityBase):
 	__tablename__ = 'region'
 
-	id = Column(Integer, primary_key = True)
+	id: int = Column(Integer, primary_key = True)
 
-	name = Column(Text)
-	type = Column(Text)
+	name: str = Column(Text)
+	type: str = Column(Text)
 
 	# Establish relationship with RegionCode
-	codes = relationship("RegionCode", back_populates = "region")
+	codes: Iterable["RegionCode"] = relationship("RegionCode", back_populates = "region")
 
 	# Establish relationship with `series`
-	series = relationship("Series", back_populates = "region")
+	series: Iterable["Series"] = relationship("Series", back_populates = "region")
 
 	# TODO: Add aliases
 
@@ -59,20 +61,19 @@ class Region(EntityBase):
 		return string
 
 
-
 class Report(EntityBase):
 	__tablename__ = "report"
-	id = Column(Integer, primary_key = True)
-	name = Column(Text)
-	date = Column(Date)
-	url = Column(Text)
-	agency = Column(Text)
+	id: int = Column(Integer, primary_key = True)
+	name: str = Column(Text)
+	date: datetime.date = Column(Date)
+	url: str = Column(Text)
+	agency: str = Column(Text)
 	# Used to indicate the day of year that the dataset corresponds to.
 	# Ex. census data starts mid-year.
-	day_of_year = Column(Integer)
+	day_of_year: int = Column(Integer)
 
 	# Establish relationship with Series
-	series = relationship("Series", back_populates = "report")
+	series: Iterable["Series"] = relationship("Series", back_populates = "report")
 
 	def __repr__(self) -> str:
 		s = f"Report(date = '{self.date}', name = '{self.name}', agency = '{self.agency}')"
@@ -81,27 +82,57 @@ class Report(EntityBase):
 
 class Series(EntityBase):
 	__tablename__ = "series"
-	id = Column(Integer, primary_key = True)
+	id: int = Column(Integer, primary_key = True)
 
-	code = Column(Text)
-	description = Column(Text)
-	name = Column(Text)
-	notes = Column(Text)
-	units = Column(Text)
+	code: str = Column(Text)
+	description: str = Column(Text)
+	name: str = Column(Text)
+	notes: str = Column(Text)
+	units: str = Column(Text)
+
+	_x: str = Column(Text)
+	_y: str = Column(Text)
 
 	# Establish relationship with Report
-	report_id = Column(String, ForeignKey("report.id"))
-	report = relationship("Report", back_populates = "series")
+	report_id: str = Column(String, ForeignKey("report.id"))
+	report: Iterable["Report"] = relationship("Report", back_populates = "series")
 
-	region_id = Column(Integer, ForeignKey("region.id"))
-	region = relationship("Region", back_populates = "series")
+	region_id: int = Column(Integer, ForeignKey("region.id"))
+	region: "Region" = relationship("Region", back_populates = "series")
 
-	scale_id = Column(Integer, ForeignKey("scale.code"))
-	scale = relationship("Scale", back_populates = "series")
+	scale_id: int = Column(Integer, ForeignKey("scale.code"))
+	scale: "Scale" = relationship("Scale", back_populates = "series")
+
+	@property
+	def x(self):
+		return self._unpack_list(self._x, int)
+
+	@x.setter
+	def x(self, values: Iterable[int]):
+		self._x = self._pack_list(values)
+
+	@property
+	def y(self) -> List[float]:
+		return self._unpack_list(self._y, float)
+
+	@y.setter
+	def y(self, values: Iterable[float]):
+		self._y = self._pack_list(values)
 
 	def __repr__(self) -> str:
 		s = f"Series(code = '{self.code}', name = '{self.name}', units = '{self.units}')"
 		return s
+
+	@staticmethod
+	def _unpack_list(value: str, dtype) -> List:
+		""" Converts a string of elements into a list of values"""
+		vs = [dtype(i) for i in value.split('|')]
+		return vs
+
+	@staticmethod
+	def _pack_list(iterable: Iterable) -> str:
+		v = "|".join([str(i) for i in iterable])
+		return v
 
 	def tags(self):
 		raise NotImplementedError
@@ -115,10 +146,10 @@ class Series(EntityBase):
 
 class Scale(EntityBase):
 	__tablename__ = "scale"
-	code = Column(String(10), primary_key = True)
-	multiplier = Column(Float)
+	code: str = Column(String(10), primary_key = True)
+	multiplier: float = Column(Float)
 
-	series = relationship("Series", back_populates = "scale")
+	series: Collection["Series"] = relationship("Series", back_populates = "scale")
 
 	def __repr__(self) -> str:
 		s = f"Scale(code = {self.code}, multiplier = {self.multiplier})"
