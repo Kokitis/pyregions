@@ -95,7 +95,7 @@ class Series(EntityBase):
 
 	# Establish relationship with Report
 	report_id: str = Column(String, ForeignKey("report.id"))
-	report: Iterable["Report"] = relationship("Report", back_populates = "series")
+	report: "Report" = relationship("Report", back_populates = "series")
 
 	region_id: int = Column(Integer, ForeignKey("region.id"))
 	region: "Region" = relationship("Region", back_populates = "series")

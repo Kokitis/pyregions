@@ -2,7 +2,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, DateTime, Float
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from typing import Optional, Iterable, Tuple
+from typing import Optional, Iterable, Tuple, Union
 import datetime
 
 try:
@@ -31,14 +31,23 @@ class BaseDatabase:
 
 		return session
 
-	def get_region(self, code: str) -> sql.Region:
-		pass
+	def get_region_from_code(self, code: str) -> Optional[sql.Region]:
+		region_code = self.session.query(sql.RegionCode.value == code).first()
+		return region_code.region
 
-	def get_report(self, name: str) -> sql.Report:
-		raise NotImplementedError
+	def get_report(self, name: str) -> Optional[sql.Report]:
+		report = self.session.query(sql.Report.name == name).first()
+		return report
 
-	def get_scale(self) -> sql.Scale:
-		raise NotImplementedError
+	def get_scale(self, value:Union[str, float, None]) -> Optional[sql.Scale]:
+		"""Attempts to find a scale based on Scale.code if a value is passed, or by Scale.multiplier if value is a float."""
+		if isinstance(value, str):
+			scale = self.session.query(sql.Scale.code == value).first()
+		elif isinstance(value, float):
+			scale = self.session.query(sql.Scale.multiplier == value).first()
+		else:
+			scale = None
+		return scale
 
 	def get_series(self) -> sql.Series:
 		raise NotImplementedError
@@ -51,7 +60,7 @@ class BaseDatabase:
 		self.session.add(region)
 		return region
 
-	def add_report(self, name: str, date: datetime.datetime, url: str, agency: str, day_of_year: Optional[int] = None):
+	def add_report(self, name: str, date: datetime.date, url: str, agency: str, day_of_year: Optional[int] = None):
 		if day_of_year is None:
 			day_of_year = 0
 		else:
@@ -82,11 +91,31 @@ class BaseDatabase:
 		self.session.add(region_code)
 		return region_code
 
-	def add_series(self, code: str, description: str, name: str, notes: str, units: str, values: Iterable[Tuple[int,float]])->sql.Series:
+	def add_scales(self):
+		""" It's simpler to add these all at once."""
+		pass
+
+	def add_series(self, name: str, code: str, description: str, notes: str, units: str,
+				   values: Iterable[Tuple[int, float]], report:sql.Report, region:sql.Region, scale:sql.Scale) -> sql.Series:
 		series = sql.Series(
 			name = name,
 			code = code,
 			description = description,
 			notes = notes,
-			units = units
+			units = units,
+
+			report = report,
+			region = region,
+			scale = scale
 		)
+
+		x, y = zip(*values)
+		series.x = x
+		series.y = y
+
+		self.session.add(series)
+
+		return series
+
+	def import_report(self, report):
+		""" Adds a report which has been formatted using the standardized API format."""
